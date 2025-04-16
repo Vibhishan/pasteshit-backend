@@ -1,0 +1,147 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# API Rules
+
+## Endpoint Naming
+- type: "endpoint-naming"
+- pattern: "**/routers/*.py"
+- message: "API endpoints must follow RESTful conventions:
+  - Use plural nouns for resources (/api/v1/pastes)
+  - Use HTTP methods appropriately (GET, POST, PUT, DELETE)
+  - Version all endpoints (/api/v1/*)
+  - Use hyphens for multi-word resources
+  - Use query parameters for filtering and pagination"
+- severity: error
+- goodExample: |
+  @router.post("/api/v1/pastes", response_model=PasteResponse)
+  async def create_paste(paste: PasteCreate):
+      ...
+
+  @router.get("/api/v1/pastes/{paste_id}", response_model=PasteDetail)
+  async def get_paste(paste_id: str):
+      ...
+- badExample: |
+  @router.post("/create-paste", response_model=PasteResponse)
+  async def create_paste(paste: PasteCreate):
+      ...
+
+  @router.get("/get-paste/{id}", response_model=PasteDetail)
+  async def get_paste(id: str):
+      ...
+
+## Request Validation
+- type: "pydantic-validation"
+- pattern: "**/schemas.py"
+- message: "All API requests must be validated using Pydantic models:
+  - Define clear request models for each endpoint
+  - Include proper field validation (min_length, max_length, regex patterns)
+  - Use proper field types (str, int, datetime, etc.)
+  - Include descriptive field names and documentation"
+- severity: error
+- goodExample: |
+  from pydantic import BaseModel, Field
+  from typing import Optional
+  from datetime import datetime
+
+  class PasteCreate(BaseModel):
+      """Create a new paste."""
+      content: str = Field(..., min_length=1, max_length=100000)
+      expires_at: Optional[datetime] = None
+
+      class Config:
+          json_schema_extra = {
+              "example": {
+                  "content": "Hello, World!",
+                  "expires_at": "2024-12-31T23:59:59Z"
+              }
+          }
+- badExample: |
+  class PasteCreate:
+      def __init__(self, content):
+          self.content = content
+
+## Response Models
+- type: "response-model"
+- pattern: "**/schemas.py"
+- message: "All API responses must use Pydantic models:
+  - Define clear response models for each endpoint
+  - Include all necessary fields (id, content, created_at)
+  - Use proper field types
+  - Include proper documentation
+  - Handle both success and error responses"
+- severity: error
+- goodExample: |
+  class PasteResponse(BaseModel):
+      """Response model for created paste."""
+      id: str
+      url: str
+      created_at: datetime
+
+      class Config:
+          json_schema_extra = {
+              "example": {
+                  "id": "abc123",
+                  "url": "http://example.com/pastes/abc123",
+                  "created_at": "2024-01-01T00:00:00Z"
+              }
+          }
+- badExample: |
+  class PasteResponse:
+      def __init__(self, id, url):
+          self.id = id
+          self.url = url
+
+## Error Handling
+- type: "error-handling"
+- pattern: "**/routers/*.py"
+- message: "All API endpoints must implement proper error handling:
+  - Handle 404 Not Found for missing resources
+  - Handle 400 Bad Request for invalid input
+  - Handle 500 Internal Server Error for unexpected errors
+  - Return consistent error response format
+  - Include descriptive error messages
+  - Log errors appropriately"
+- severity: error
+- goodExample: |
+  @router.get("/api/v1/pastes/{paste_id}")
+  async def get_paste(paste_id: str, db: Session = Depends(get_db)):
+      paste = crud.get_paste(db, paste_id)
+      if not paste:
+          raise HTTPException(
+              status_code=404,
+              detail=f"Paste with ID {paste_id} not found"
+          )
+      return paste
+- badExample: |
+  @router.get("/api/v1/pastes/{paste_id}")
+  async def get_paste(paste_id: str, db: Session = Depends(get_db)):
+      paste = crud.get_paste(db, paste_id)
+      return paste  # No error handling
+
+## CORS Configuration
+- type: "cors-config"
+- pattern: "**/main.py"
+- message: "FastAPI app must include proper CORS configuration:
+  - Configure allowed origins
+  - Configure allowed methods
+  - Configure allowed headers
+  - Configure credentials handling
+  - Configure max age for preflight requests"
+- severity: error
+- goodExample: |
+  from fastapi.middleware.cors import CORSMiddleware
+
+  app = FastAPI()
+  app.add_middleware(
+      CORSMiddleware,
+      allow_origins=["http://localhost:3000"],
+      allow_credentials=True,
+      allow_methods=["*"],
+      allow_headers=["*"],
+      max_age=3600,
+  )
+- badExample: |
+  app = FastAPI()  # No CORS configuration

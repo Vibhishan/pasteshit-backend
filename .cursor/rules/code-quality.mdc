@@ -1,0 +1,144 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Code Quality Rules
+
+## Code Style
+- type: "pep8-style"
+- pattern: "**/*.py"
+- message: "Code must follow PEP 8 style guidelines:
+  - Use 4 spaces for indentation
+  - Limit lines to 79 characters
+  - Use proper naming conventions
+  - Use proper spacing around operators
+  - Use proper spacing in function definitions
+  - Use proper docstring format
+  - Use proper import order"
+- severity: warning
+- goodExample: |
+  from typing import Optional
+  from datetime import datetime
+
+  def create_paste(
+      content: str,
+      expires_at: Optional[datetime] = None
+  ) -> dict:
+      """Create a new paste entry.
+      
+      Args:
+          content: The content of the paste
+          expires_at: Optional expiration date
+          
+      Returns:
+          dict: The created paste data
+      """
+      return {
+          "id": generate_unique_id(),
+          "content": content,
+          "expires_at": expires_at
+      }
+- badExample: |
+  def create_paste(content,expires_at=None):
+      return {"id":generate_unique_id(),"content":content,"expires_at":expires_at}
+
+## Documentation
+- type: "docstring"
+- pattern: "**/*.py"
+- message: "Code must be properly documented:
+  - Include docstrings for all modules, classes, and functions
+  - Use proper docstring format (Google style)
+  - Include type hints
+  - Include parameter descriptions
+  - Include return value descriptions
+  - Include exception descriptions
+  - Include examples where necessary"
+- severity: warning
+- goodExample: |
+  def get_paste(paste_id: str) -> Optional[dict]:
+      """Get a paste by its ID.
+      
+      Args:
+          paste_id: The unique identifier of the paste
+          
+      Returns:
+          Optional[dict]: The paste data if found, None otherwise
+          
+      Raises:
+          HTTPException: If the paste is not found
+      """
+      paste = db.get_paste(paste_id)
+      if not paste:
+          raise HTTPException(
+              status_code=404,
+              detail=f"Paste with ID {paste_id} not found"
+          )
+      return paste
+- badExample: |
+  def get_paste(id):
+      paste = db.get_paste(id)
+      return paste
+
+## Testing
+- type: "test-coverage"
+- pattern: "**/tests/*.py"
+- message: "Code must be properly tested:
+  - Write unit tests for all functions
+  - Write integration tests for API endpoints
+  - Use proper test naming conventions
+  - Use proper test organization
+  - Include test documentation
+  - Maintain good test coverage
+  - Use proper test fixtures"
+- severity: error
+- goodExample: |
+  import pytest
+  from fastapi.testclient import TestClient
+  from .main import app
+
+  client = TestClient(app)
+
+  def test_create_paste():
+      """Test creating a new paste."""
+      response = client.post(
+          "/api/v1/pastes",
+          json={"content": "Test paste"}
+      )
+      assert response.status_code == 201
+      data = response.json()
+      assert "id" in data
+      assert "url" in data
+- badExample: |
+  def test_paste():
+      response = client.post("/pastes", json={"content": "test"})
+      assert response.status_code == 200
+
+## Security
+- type: "security"
+- pattern: "**/*.py"
+- message: "Code must follow security best practices:
+  - No hardcoded secrets
+  - Use environment variables for configuration
+  - Implement proper input validation
+  - Implement proper output encoding
+  - Use secure random number generation
+  - Implement proper error handling
+  - Use secure session management"
+- severity: error
+- goodExample: |
+  import os
+  from dotenv import load_dotenv
+
+  load_dotenv()
+
+  DATABASE_URL = os.getenv("DATABASE_URL")
+  SECRET_KEY = os.getenv("SECRET_KEY")
+  ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+
+  if not DATABASE_URL or not SECRET_KEY:
+      raise ValueError("Missing required environment variables")
+- badExample: |
+  DATABASE_URL = "sqlite:///./pastebin.db"
+  SECRET_KEY = "my-secret-key"
+  ALLOWED_ORIGINS = ["http://localhost:3000"]

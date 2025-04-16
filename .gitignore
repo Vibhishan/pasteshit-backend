@@ -1,0 +1,16 @@
+.venv/
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+*.so
+.Python
+.coverage
+htmlcov/
+.tox/
+.nox/
+*.egg-info/
+*.egg
+.DS_Store
+*.db

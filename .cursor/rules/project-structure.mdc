@@ -1,0 +1,102 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Project Structure Rules
+
+## File Organization
+- type: "file-exists"
+- pattern: ["main.py", "database.py", "models.py", "schemas.py", "crud.py", "routers/", "config.py", "tests/"]
+- message: "Project must follow the standard FastAPI project structure with the following files and directories:
+  - main.py: Application entry point and FastAPI app configuration
+  - database.py: Database connection and session management
+  - models.py: SQLAlchemy ORM models (if used)
+  - schemas.py: Pydantic models for request/response validation
+  - crud.py: Database operations and business logic
+  - routers/: Directory containing API route definitions
+  - config.py: Configuration and environment variables
+  - tests/: Directory for test files"
+- severity: error
+- goodExample: |
+  pasteshit-backend/
+  ├── main.py
+  ├── database.py
+  ├── models.py
+  ├── schemas.py
+  ├── crud.py
+  ├── config.py
+  ├── routers/
+  │   └── pastes.py
+  ├── tests/
+  │   └── test_pastes.py
+  └── pyproject.toml
+- badExample: |
+  pasteshit-backend/
+  ├── src/
+  │   └── main.py
+  ├── app/
+  │   └── routes.py
+  ├── db/
+  │   └── connection.py
+  └── requirements.txt
+
+## Module Imports
+- type: "import-order"
+- pattern: "**/*.py"
+- message: "Imports must be organized in the following order:
+  1. Standard library imports
+  2. Third-party package imports
+  3. Local application imports
+  Each group should be separated by a blank line"
+- severity: warning
+- goodExample: |
+  # Standard library imports
+  from datetime import datetime
+  from typing import Optional
+  
+  # Third-party imports
+  from fastapi import FastAPI, HTTPException
+  from pydantic import BaseModel
+  
+  # Local imports
+  from .database import get_db
+  from .crud import create_paste
+- badExample: |
+  from fastapi import FastAPI
+  from datetime import datetime
+  from .database import get_db
+  from pydantic import BaseModel
+  from .crud import create_paste
+  from typing import Optional
+
+## Directory Structure
+- type: "directory-structure"
+- pattern: "**/*"
+- message: "Project must maintain a clean directory structure:
+  - All Python source files in the root directory
+  - API routes in the routers/ directory
+  - Tests in the tests/ directory
+  - Configuration files in the root directory
+  - Documentation in the docs/ directory"
+- severity: error
+- goodExample: |
+  pasteshit-backend/
+  ├── main.py
+  ├── database.py
+  ├── routers/
+  │   └── pastes.py
+  ├── tests/
+  │   └── test_pastes.py
+  ├── docs/
+  │   └── api.md
+  └── pyproject.toml
+- badExample: |
+  pasteshit-backend/
+  ├── src/
+  │   ├── api/
+  │   │   └── routes.py
+  │   └── main.py
+  ├── test/
+  │   └── api_test.py
+  └── requirements.txt

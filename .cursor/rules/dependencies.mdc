@@ -1,0 +1,85 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Dependency Management Rules
+
+## Package Management
+- type: "dependency-management"
+- pattern: "pyproject.toml"
+- message: "Dependencies must be properly managed using uv:
+  - Use pyproject.toml for dependency management
+  - Specify exact versions in dependencies
+  - Use uv for package installation and management
+  - Document package purposes
+  - Keep packages up to date
+  - Handle package conflicts
+  - Document package versions"
+- severity: error
+- goodExample: |
+  [project]
+  name = "pasteshit-backend"
+  version = "0.1.0"
+  dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+  ]
+- badExample: |
+  [project]
+  name = "pasteshit-backend"
+  version = "0.1.0"
+  dependencies = [
+    "fastapi",  # No version specified
+    "uvicorn",  # No version specified
+    "sqlalchemy",  # No version specified
+  ]
+
+## Virtual Environment
+- type: "virtual-env"
+- pattern: ".venv/"
+- message: "Project must use a virtual environment with uv:
+  - Create virtual environment using uv venv
+  - Activate virtual environment before development
+  - Install dependencies using uv pip install
+  - Document virtual environment setup
+  - Include .venv in .gitignore"
+- severity: error
+- goodExample: |
+  # Create virtual environment
+  uv venv
+  source .venv/bin/activate
+  
+  # Install dependencies
+  uv pip install -e .
+- badExample: |
+  # Using pip instead of uv
+  python -m venv .venv
+  source .venv/bin/activate
+  pip install -r requirements.txt
+
+## Dependency Installation
+- type: "package-installation"
+- pattern: "**/*.py"
+- message: "Dependencies must be installed using uv:
+  - Use uv pip install for package installation
+  - Use uv pip compile for dependency resolution
+  - Use uv pip sync for dependency synchronization
+  - Document installation commands
+  - Handle dependency conflicts"
+- severity: error
+- goodExample: |
+  # Install dependencies
+  uv pip install -e .
+  
+  # Update dependencies
+  uv pip install --upgrade fastapi
+  
+  # Install development dependencies
+  uv pip install -e ".[dev]"
+- badExample: |
+  # Using pip instead of uv
+  pip install -r requirements.txt
+  pip install --upgrade fastapi

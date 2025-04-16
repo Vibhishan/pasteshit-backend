@@ -1,0 +1,159 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Database Rules
+
+## Schema Definition
+- type: "sqlalchemy-model"
+- pattern: "**/models.py"
+- message: "Database schema must be properly defined:
+  - Use SQLAlchemy ORM models (if used)
+  - Define proper column types and constraints
+  - Include primary keys
+  - Include foreign keys where necessary
+  - Include proper indexes
+  - Include proper timestamps
+  - Include proper documentation"
+- severity: error
+- goodExample: |
+  from sqlalchemy import Column, String, DateTime, func
+  from sqlalchemy.ext.declarative import declarative_base
+
+  Base = declarative_base()
+
+  class Paste(Base):
+      """SQLAlchemy model for paste entries."""
+      __tablename__ = "pastes"
+
+      id = Column(String, primary_key=True, index=True)
+      content = Column(String, nullable=False)
+      created_at = Column(DateTime, default=func.now(), nullable=False)
+      expires_at = Column(DateTime, nullable=True)
+
+      def __repr__(self):
+          return f"<Paste(id='{self.id}', created_at='{self.created_at}')>"
+- badExample: |
+  class Paste:
+      def __init__(self, id, content):
+          self.id = id
+          self.content = content
+
+## Connection Management
+- type: "database-connection"
+- pattern: "**/database.py"
+- message: "Database connections must be properly managed:
+  - Use connection pooling
+  - Handle connection errors
+  - Implement proper session management
+  - Close connections properly
+  - Use environment variables for connection strings
+  - Implement proper retry logic"
+- severity: error
+- goodExample: |
+  from sqlalchemy import create_engine
+  from sqlalchemy.orm import sessionmaker
+  from sqlalchemy.ext.declarative import declarative_base
+  import os
+
+  SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./pastebin.db")
+
+  engine = create_engine(
+      SQLALCHEMY_DATABASE_URL,
+      connect_args={"check_same_thread": False}  # SQLite specific
+  )
+  SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+  def get_db():
+      db = SessionLocal()
+      try:
+          yield db
+      finally:
+          db.close()
+- badExample: |
+  from sqlalchemy import create_engine
+  engine = create_engine("sqlite:///./pastebin.db")
+  # No session management or error handling
+
+## Query Safety
+- type: "sql-safety"
+- pattern: "**/crud.py"
+- message: "Database queries must be safe and efficient:
+  - Use parameterized queries
+  - Avoid SQL injection vulnerabilities
+  - Use proper indexing
+  - Implement proper error handling
+  - Use transactions where necessary
+  - Implement proper logging"
+- severity: error
+- goodExample: |
+  from sqlalchemy.orm import Session
+  from . import models, schemas
+
+  def create_paste(db: Session, paste: schemas.PasteCreate) -> models.Paste:
+      """Create a new paste entry."""
+      db_paste = models.Paste(
+          id=generate_unique_id(),
+          content=paste.content,
+          expires_at=paste.expires_at
+      )
+      db.add(db_paste)
+      db.commit()
+      db.refresh(db_paste)
+      return db_paste
+
+  def get_paste(db: Session, paste_id: str) -> models.Paste:
+      """Get a paste by ID."""
+      return db.query(models.Paste).filter(models.Paste.id == paste_id).first()
+- badExample: |
+  def create_paste(db, content):
+      # Unsafe string interpolation
+      db.execute(f"INSERT INTO pastes (content) VALUES ('{content}')")
+      return True
+
+## Data Validation
+- type: "data-validation"
+- pattern: "**/crud.py"
+- message: "Data must be validated before database operations:
+  - Validate input data
+  - Sanitize input data
+  - Check for data integrity
+  - Handle edge cases
+  - Implement proper error messages"
+- severity: error
+- goodExample: |
+  from sqlalchemy.orm import Session
+  from fastapi import HTTPException
+  from . import models, schemas
+
+  def create_paste(db: Session, paste: schemas.PasteCreate) -> models.Paste:
+      """Create a new paste entry with validation."""
+      if not paste.content:
+          raise HTTPException(
+              status_code=400,
+              detail="Paste content cannot be empty"
+          )
+      
+      if len(paste.content) > 100000:
+          raise HTTPException(
+              status_code=400,
+              detail="Paste content exceeds maximum length"
+          )
+      
+      db_paste = models.Paste(
+          id=generate_unique_id(),
+          content=paste.content,
+          expires_at=paste.expires_at
+      )
+      db.add(db_paste)
+      db.commit()
+      db.refresh(db_paste)
+      return db_paste
+- badExample: |
+  def create_paste(db, content):
+      # No validation
+      db_paste = models.Paste(content=content)
+      db.add(db_paste)
+      db.commit()
+      return db_paste
